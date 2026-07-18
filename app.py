@@ -5,7 +5,10 @@ from __future__ import annotations
 import re
 import shutil
 import tempfile
+import zipfile
+from html import unescape
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
@@ -77,21 +80,143 @@ def jd_from_text(text: str) -> dict:
 def _save_uploaded_resumes() -> Path:
     uploads = request.files.getlist("resumes")
     destination = Path(tempfile.mkdtemp(prefix="run_", dir=RUN_DIRECTORY))
+    try:
+        saved_count = _save_uploads(uploads, destination)
+        drive_link = request.form.get("drive_link", "").strip()
+        if drive_link:
+            saved_count += _download_drive_resumes(drive_link, destination)
+        if not saved_count:
+            raise ValueError("Upload a PDF, DOCX, or DOC resume, choose a folder, or paste a public Google Drive link.")
+        return destination
+    except Exception:
+        shutil.rmtree(destination, ignore_errors=True)
+        raise
+
+
+def _save_uploads(uploads, destination: Path) -> int:
     saved_count = 0
     for upload in uploads:
         filename = secure_filename(upload.filename or "")
         if not filename or Path(filename).suffix.lower() not in SUPPORTED_RESUME_EXTENSIONS:
             continue
-        target = destination / filename
-        duplicate_number = 2
-        while target.exists():
-            target = destination / f"{Path(filename).stem}_{duplicate_number}{Path(filename).suffix}"
-            duplicate_number += 1
+        target = _available_path(destination / filename)
         upload.save(target)
         saved_count += 1
-    if not saved_count:
-        raise ValueError("Upload at least one PDF, DOCX, or DOC resume, or select a folder containing them.")
-    return destination
+    return saved_count
+
+
+def _available_path(path: Path) -> Path:
+    if not path.exists():
+        return path
+    duplicate_number = 2
+    while True:
+        candidate = path.with_stem(f"{path.stem}_{duplicate_number}")
+        if not candidate.exists():
+            return candidate
+        duplicate_number += 1
+
+
+def _detect_document_extension(path: Path) -> str | None:
+    signature = path.read_bytes()[:4096]
+    if signature.startswith(b"%PDF"):
+        return ".pdf"
+    if signature.startswith(b"\xd0\xcf\x11\xe0"):
+        return ".doc"
+    if zipfile.is_zipfile(path):
+        with zipfile.ZipFile(path) as archive:
+            if "word/document.xml" in archive.namelist():
+                return ".docx"
+    return None
+
+
+def _download_drive_resumes(drive_link: str, destination: Path) -> int:
+    parsed_url = urlparse(drive_link)
+    host = parsed_url.netloc.lower()
+    if host not in {"drive.google.com", "www.drive.google.com", "docs.google.com"}:
+        raise ValueError("Use a public Google Drive file or folder link.")
+    if "/folders/" in parsed_url.path:
+        return _download_public_drive_folder(drive_link, destination)
+    file_id = _drive_file_id(parsed_url)
+    if not file_id:
+        raise ValueError("Use a public Google Drive file link or a shared folder link.")
+    temporary_output = destination / "drive_document"
+    if not _download_public_drive_file(file_id, temporary_output):
+        raise ValueError("The Google Drive file could not be downloaded. Confirm that anyone with the link can view it.")
+    extension = _detect_document_extension(temporary_output)
+    if not extension:
+        temporary_output.unlink(missing_ok=True)
+        raise ValueError("The Google Drive file is not a supported PDF, DOCX, or DOC resume.")
+    downloaded_paths = [_available_path(temporary_output.with_suffix(extension))]
+    temporary_output.rename(downloaded_paths[0])
+    accepted = 0
+    for downloaded_path in downloaded_paths:
+        path = Path(downloaded_path)
+        if not path.exists() or not path.is_file():
+            continue
+        if path.suffix.lower() not in SUPPORTED_RESUME_EXTENSIONS:
+            extension = _detect_document_extension(path)
+            if not extension:
+                continue
+            path = _available_path(path.with_suffix(extension))
+            Path(downloaded_path).rename(path)
+        accepted += 1
+    if not accepted:
+        raise ValueError("No supported PDF, DOCX, or DOC resumes were found in that public Google Drive link.")
+    return accepted
+
+
+def _drive_file_id(parsed_url) -> str | None:
+    path_match = re.search(r"/(?:file|document)/d/([A-Za-z0-9_-]+)", parsed_url.path)
+    if path_match:
+        return path_match.group(1)
+    return parse_qs(parsed_url.query).get("id", [None])[0]
+
+
+def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
+    import requests
+
+    response = requests.get(drive_link, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+    response.raise_for_status()
+    pattern = r'aria-label="([^\"]+\.(?:pdf|docx?))\s+[^\"]*?\s+Shared"[^>]*ssk=\'[^\']+:[^\']+:([A-Za-z0-9_-]+)-0-16\''
+    files = []
+    seen_ids = set()
+    for match in re.finditer(pattern, response.text, re.IGNORECASE):
+        filename, file_id = unescape(match.group(1)), match.group(2)
+        if file_id not in seen_ids:
+            files.append((filename, file_id))
+            seen_ids.add(file_id)
+    for filename, file_id in files:
+        safe_name = secure_filename(filename) or f"drive_{file_id}.pdf"
+        output = _available_path(destination / safe_name)
+        _download_public_drive_file(file_id, output)
+    accepted = len([path for path in destination.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS])
+    if not accepted:
+        raise ValueError("No supported PDF, DOCX, or DOC resumes were found in that public Google Drive folder.")
+    return accepted
+
+
+def _download_public_drive_file(file_id: str, output: Path) -> bool:
+    import requests
+
+    try:
+        response = requests.get(
+            "https://drive.usercontent.google.com/download",
+            params={"id": file_id, "export": "download", "confirm": "t"},
+            headers={"User-Agent": "Mozilla/5.0"},
+            stream=True,
+            timeout=45,
+        )
+        response.raise_for_status()
+        if "text/html" in response.headers.get("Content-Type", "").lower():
+            return False
+        with output.open("wb") as file:
+            for chunk in response.iter_content(chunk_size=1024 * 128):
+                if chunk:
+                    file.write(chunk)
+        return output.exists() and output.stat().st_size > 0
+    except requests.RequestException:
+        output.unlink(missing_ok=True)
+        return False
 
 
 @app.get("/")

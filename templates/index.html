@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#f5f7ff">
   <title>InternLoom Recruiter Console</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='drive.css') }}">
 </head>
 <body>
   <main class="shell">
@@ -40,6 +41,7 @@
             <input id="resume-folder" name="resumes" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple webkitdirectory directory data-upload-input>
           </label>
         </div>
+        <div class="drive-import"><span class="drive-icon">▸</span><div><label for="drive_link">Import from Google Drive</label><p>Paste a public Drive file or folder link and we’ll collect supported resumes.</p></div><input id="drive_link" name="drive_link" type="url" inputmode="url" placeholder="https://drive.google.com/drive/folders/..." aria-describedby="drive-help"><span id="drive-help" class="sr-only">Only public Google Drive file and folder links are supported.</span></div>
         <p class="privacy-note"><span>✓</span> Documents are processed for this review and deleted from the server afterwards.</p>
         <div class="jd-group">
           <div class="field-head"><label for="job_description">Job description</label><span>Include skills, CGPA threshold, and number of slots for sharper results.</span></div>

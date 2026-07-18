@@ -27,6 +27,8 @@ python app.py
 
 Open `http://127.0.0.1:5000`, choose one or more PDFs (or a folder in Chrome/Edge), paste a JD, and generate a sortable shortlist. The **Export CSV** button downloads the current scored table. The UI converts detected JD skills into the same deterministic scoring schema used by the CLI.
 
+The web UI also accepts a public Google Drive file or folder link. InternLoom downloads only supported PDF, DOCX, and DOC resumes into a temporary workspace, scores them, then removes the temporary files after the review.
+
 ## Public Deployment
 
 GitHub Pages cannot run Flask or process PDF uploads. This repository includes `render.yaml` for a hosted Python deployment: create a new **Web Service** in Render, connect the GitHub repository, and Render detects the build and start commands. Uploaded resumes are removed from the server immediately after a shortlist is generated.

@@ -392,4 +392,4 @@ def parse_resumes(resume_folder: str | Path) -> list[dict[str, Any]]:
     folder = Path(resume_folder)
     if not folder.exists() or not folder.is_dir():
         raise ValueError(f"Resume folder does not exist or is not a directory: {folder}")
-    return [parse_resume(path) for path in sorted(folder.iterdir()) if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS]
+    return [parse_resume(path) for path in sorted(folder.rglob("*")) if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS]
