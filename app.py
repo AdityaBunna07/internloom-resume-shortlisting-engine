@@ -77,6 +77,36 @@ def jd_from_text(text: str) -> dict:
     }
 
 
+def jds_from_hiring_plan(text: str) -> list[dict]:
+    plans = []
+    for line_number, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [part.strip() for part in line.split("|")]
+        if len(parts) < 3:
+            raise ValueError(f"Hiring plan line {line_number} must use: Role | slots | required skills.")
+        role, slot_text, required_text = parts[:3]
+        preferred_text = parts[3] if len(parts) > 3 else ""
+        cgpa_text = parts[4] if len(parts) > 4 else "0"
+        if not role:
+            raise ValueError(f"Hiring plan line {line_number} needs a role name.")
+        try:
+            slots = int(slot_text)
+            cgpa_min = float(cgpa_text)
+        except ValueError as error:
+            raise ValueError(f"Hiring plan line {line_number} has an invalid slot count or CGPA.") from error
+        if slots < 1:
+            raise ValueError(f"Hiring plan line {line_number} needs at least one slot.")
+        required = _skills_in_text(required_text)
+        if not required:
+            raise ValueError(f"Hiring plan line {line_number} has no supported required skills.")
+        plans.append({"role": role, "slots": slots, "required": required, "preferred": _skills_in_text(preferred_text), "cgpa_min": cgpa_min})
+    if not plans:
+        raise ValueError("Add at least one valid role to the hiring plan, or paste a single JD above.")
+    return plans
+
+
 def _save_uploaded_resumes() -> Path:
     uploads = request.files.getlist("resumes")
     destination = Path(tempfile.mkdtemp(prefix="run_", dir=RUN_DIRECTORY))
@@ -233,12 +263,13 @@ def index():
 def shortlist():
     upload_directory = None
     try:
-        jd = jd_from_text(request.form.get("job_description", ""))
+        jd_text = request.form.get("job_description", "")
+        hiring_plan = request.form.get("hiring_plan", "")
+        jds = jds_from_hiring_plan(hiring_plan) if hiring_plan.strip() else [jd_from_text(jd_text)]
         upload_directory = _save_uploaded_resumes()
         resumes = parse_resumes(upload_directory)
-        result = score_for_jd(resumes, jd)
-        candidates = result["shortlist"] + result["reserve"]
-        return render_template("index.html", result=result, jd_text=request.form.get("job_description", ""), candidates=candidates)
+        results = [score_for_jd(resumes, jd) for jd in jds]
+        return render_template("index.html", results=results, jd_text=jd_text, hiring_plan=hiring_plan)
     except ValueError as error:
         return render_template("index.html", error=str(error), jd_text=request.form.get("job_description", "")), 400
     except Exception:

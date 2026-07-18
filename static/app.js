@@ -41,16 +41,20 @@ if (form) {
   });
 }
 
-const table = document.getElementById("shortlist-table");
-const search = document.getElementById("candidate-search");
+function setupRolePanel(panel) {
+  const table = panel.querySelector("[data-result-table]");
+  const search = panel.querySelector("[data-candidate-search]");
+  const exportButton = panel.querySelector("[data-export-csv]");
+  if (!table) return;
 
-if (search && table) {
-  search.addEventListener("input", () => {
-    const query = search.value.toLowerCase();
-    [...table.tBodies[0].rows].forEach((row) => {
-      row.hidden = !row.innerText.toLowerCase().includes(query);
+  if (search) {
+    search.addEventListener("input", () => {
+      const query = search.value.toLowerCase();
+      [...table.tBodies[0].rows].forEach((row) => {
+        row.hidden = !row.innerText.toLowerCase().includes(query);
+      });
     });
-  });
+  }
 
   table.querySelectorAll("th[data-key]").forEach((header) => {
     header.addEventListener("click", () => {
@@ -68,19 +72,33 @@ if (search && table) {
       header.dataset.direction = direction === 1 ? "asc" : "desc";
     });
   });
+
+  if (exportButton) {
+    exportButton.addEventListener("click", () => {
+      const candidates = JSON.parse(panel.querySelector(".candidate-data").textContent);
+      const rows = [["Candidate", "File", "Score", "Confidence", "Parse Quality", "Reasoning"]];
+      candidates.forEach((candidate) => rows.push([candidate.name, candidate.file, candidate.score, candidate.confidence, candidate.parse_quality, candidate.reasoning.join(" | ")]));
+      const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      link.download = `${panel.querySelector(".role-summary strong").textContent.replaceAll(" ", "_").toLowerCase()}_shortlist.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+  }
 }
 
-const exportButton = document.getElementById("export-csv");
-if (exportButton) {
-  exportButton.addEventListener("click", () => {
-    const candidates = JSON.parse(document.getElementById("candidate-data").textContent);
-    const rows = [["Candidate", "File", "Score", "Confidence", "Parse Quality", "Reasoning"]];
-    candidates.forEach((candidate) => rows.push([candidate.name, candidate.file, candidate.score, candidate.confidence, candidate.parse_quality, candidate.reasoning.join(" | ")]));
-    const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    link.download = "internloom_shortlist.csv";
-    link.click();
-    URL.revokeObjectURL(link.href);
+const rolePanels = [...document.querySelectorAll("[data-role-panel]")];
+rolePanels.forEach(setupRolePanel);
+
+document.querySelectorAll("[data-role-tab]").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const activeIndex = tab.dataset.roleTab;
+    document.querySelectorAll("[data-role-tab]").forEach((item) => {
+      const active = item === tab;
+      item.classList.toggle("is-active", active);
+      item.setAttribute("aria-selected", String(active));
+    });
+    rolePanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.rolePanel === activeIndex));
   });
-}
+});

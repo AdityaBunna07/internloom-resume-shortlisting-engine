@@ -7,74 +7,49 @@
   <title>InternLoom Recruiter Console</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='drive.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='roles.css') }}">
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="{{ url_for('index') }}" aria-label="InternLoom home"><span class="brand-mark">IL</span><span>Intern<span>Loom</span></span></a>
-      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">☾</span><span class="theme-label">Dark mode</span></button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">&#9790;</span><span class="theme-label">Dark mode</span></button>
     </header>
 
     <section class="hero">
-      <div class="hero-copy enter">
-        <p class="eyebrow"><span></span> EVIDENCE-LED HIRING</p>
-        <h1>Meet your next great <em>intern.</em></h1>
-        <p>Drop in resumes, add a job description, and get a clear shortlist with every score explained.</p>
-        <div class="trust-row"><span>⚡ Deterministic scoring</span><span>◌ Private processing</span><span>↗ CSV ready</span></div>
-      </div>
-      <div class="hero-visual enter delay-1" aria-hidden="true">
-        <div class="orb orb-one"></div><div class="orb orb-two"></div>
-        <div class="signal-card"><div class="signal-head"><span class="pulse"></span><span>SHORTLIST SIGNAL</span><b>92</b></div><div class="signal-bars"><i></i><i></i><i></i><i></i><i></i></div><div class="signal-foot"><span>Strong fit</span><span>High confidence</span></div></div>
-      </div>
+      <div class="hero-copy enter"><p class="eyebrow"><span></span> EVIDENCE-LED HIRING</p><h1>Meet your next great <em>intern.</em></h1><p>Drop in resumes, add one role or a full hiring plan, and get clear shortlists with every score explained.</p><div class="trust-row"><span>&#9889; Deterministic scoring</span><span>&#9676; Private processing</span><span>&#8599; CSV ready</span></div></div>
+      <div class="hero-visual enter delay-1" aria-hidden="true"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="signal-card"><div class="signal-head"><span class="pulse"></span><span>SHORTLIST SIGNAL</span><b>92</b></div><div class="signal-bars"><i></i><i></i><i></i><i></i><i></i></div><div class="signal-foot"><span>Strong fit</span><span>High confidence</span></div></div></div>
     </section>
 
     <section class="workspace enter delay-2">
       <div class="workspace-intro"><span class="step-number">01</span><div><p class="eyebrow">START A REVIEW</p><h2>Set up your shortlist</h2></div></div>
       <form action="{{ url_for('shortlist') }}" method="post" enctype="multipart/form-data" id="shortlist-form">
         <div class="upload-grid">
-          <label class="upload-card" for="resumes">
-            <span class="upload-icon">↥</span><span class="upload-title">Choose resume files</span><span class="upload-copy" data-upload-status="resumes">PDF, DOCX, DOC, TXT, or XML</span>
-            <input id="resumes" name="resumes" type="file" accept=".pdf,.doc,.docx,.txt,.xml,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/xml,application/xml" multiple data-upload-input>
-          </label>
-          <label class="upload-card accent-card" for="resume-folder">
-            <span class="upload-icon">▣</span><span class="upload-title">Choose a folder</span><span class="upload-copy" data-upload-status="resume-folder">Upload a complete batch</span>
-        <input id="resume-folder" name="resumes" type="file" accept=".pdf,.doc,.docx,.txt,.xml,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/xml,application/xml" multiple webkitdirectory directory data-upload-input>
-          </label>
+          <label class="upload-card" for="resumes"><span class="upload-icon">&#8593;</span><span class="upload-title">Choose resume files</span><span class="upload-copy" data-upload-status="resumes">PDF, DOCX, DOC, TXT, or XML</span><input id="resumes" name="resumes" type="file" accept=".pdf,.doc,.docx,.txt,.xml,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/xml,application/xml" multiple data-upload-input></label>
+          <label class="upload-card accent-card" for="resume-folder"><span class="upload-icon">&#9635;</span><span class="upload-title">Choose a folder</span><span class="upload-copy" data-upload-status="resume-folder">Upload a complete batch</span><input id="resume-folder" name="resumes" type="file" accept=".pdf,.doc,.docx,.txt,.xml,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/xml,application/xml" multiple webkitdirectory directory data-upload-input></label>
         </div>
-        <div class="drive-import"><span class="drive-icon">▸</span><div><label for="drive_link">Import from Google Drive</label><p>Paste a public Drive file or folder link and we’ll collect supported resumes.</p></div><input id="drive_link" name="drive_link" type="url" inputmode="url" placeholder="https://drive.google.com/drive/folders/..." aria-describedby="drive-help"><span id="drive-help" class="sr-only">Only public Google Drive file and folder links are supported.</span></div>
-        <p class="privacy-note"><span>✓</span> Documents are processed for this review and deleted from the server afterwards.</p>
-        <div class="jd-group">
-          <div class="field-head"><label for="job_description">Job description</label><span>Include skills, CGPA threshold, and number of slots for sharper results.</span></div>
-          <textarea id="job_description" name="job_description" required placeholder="Frontend Developer&#10;Required: React, JavaScript, REST API, Git&#10;Preferred: TypeScript, Jest&#10;CGPA minimum: 6.5&#10;Slots: 5">{{ jd_text or '' }}</textarea>
-        </div>
-        <button class="primary-action" type="submit"><span class="button-text">Generate shortlist</span><span class="button-arrow">→</span><span class="button-loader" aria-hidden="true"></span></button>
+        <div class="drive-import"><span class="drive-icon">&#9656;</span><div><label for="drive_link">Import from Google Drive</label><p>Paste a public Drive file or folder link and we’ll collect supported resumes.</p></div><input id="drive_link" name="drive_link" type="url" inputmode="url" placeholder="https://drive.google.com/drive/folders/..." aria-describedby="drive-help"><span id="drive-help" class="sr-only">Only public Google Drive file and folder links are supported.</span></div>
+        <p class="privacy-note"><span>&#10003;</span> Documents are processed for this review and deleted from the server afterwards.</p>
+        <div class="jd-group"><div class="field-head"><label for="job_description">Single job description</label><span>Use this for one role, or use the hiring plan below for separate role quotas.</span></div><textarea id="job_description" name="job_description" placeholder="Frontend Developer&#10;Required: React, JavaScript, REST API, Git&#10;Preferred: TypeScript, Jest&#10;CGPA minimum: 6.5&#10;Slots: 5">{{ jd_text or '' }}</textarea></div>
+        <div class="hiring-plan"><div class="field-head"><label for="hiring_plan">Multi-role hiring plan</label><span>Optional. When filled, it creates separate shortlists for every role.</span></div><textarea id="hiring_plan" name="hiring_plan" placeholder="Web Developer | 10 | HTML, CSS, JavaScript, React, Git&#10;Frontend Developer | 5 | React, JavaScript, REST API, Git | TypeScript, Jest | 6.5&#10;Backend Developer | 8 | Python, SQL, REST API, Git | Docker | 6.5">{{ hiring_plan or '' }}</textarea><p>Format: <code>Role | slots | required skills | preferred skills (optional) | CGPA minimum (optional)</code></p></div>
+        <button class="primary-action" type="submit"><span class="button-text">Generate shortlists</span><span class="button-arrow">&#8594;</span><span class="button-loader" aria-hidden="true"></span></button>
       </form>
       {% if error %}<p class="error" role="alert"><span>!</span>{{ error }}</p>{% endif %}
     </section>
 
-    {% if result %}
-    <section class="result-head enter">
-      <div><p class="eyebrow"><span></span>{{ result.jd_role }}</p><h2>{{ result.candidates_shortlisted }} candidates rise to the top.</h2><p>Ranked from {{ result.candidates_evaluated }} uploaded resumes.</p></div>
-      <div class="metrics"><span><b>{{ result.score_cutoff_used if result.score_cutoff_used is not none else '—' }}</b>cutoff score</span><span><b>{{ result.parse_failures }}</b>parse flags</span></div>
-    </section>
-
-    <section class="results-panel enter delay-1">
-      <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="candidate-search" type="search" placeholder="Search candidates, skills, or reasons"></div><button class="secondary" id="export-csv" type="button"><span>↓</span> Export CSV</button></div>
-      <div class="table-wrap"><table id="shortlist-table"><thead><tr><th data-key="name">Candidate <span>↕</span></th><th data-key="score">Score <span>↕</span></th><th data-key="confidence">Confidence <span>↕</span></th><th data-key="parse_quality">Parse quality <span>↕</span></th><th>Decision</th><th>Why this score</th></tr></thead><tbody>
-      {% for candidate in candidates %}
-        <tr data-decision="{{ 'Shortlist' if candidate in result.shortlist else 'Reserve' }}">
-          <td class="candidate-cell"><span class="candidate-avatar">{{ candidate.name[:1]|upper }}</span><span>{{ candidate.name }}</span></td>
-          <td data-sort="{{ candidate.score }}"><strong>{{ candidate.score }}</strong><span class="out-of">/100</span></td>
-          <td><span class="badge {{ candidate.confidence|lower }}">{{ candidate.confidence }}</span></td>
-          <td><span class="badge {{ candidate.parse_quality|lower }}">{{ candidate.parse_quality }}</span></td>
-          <td><span class="decision {{ 'shortlist' if candidate in result.shortlist else 'reserve' }}">{{ 'Shortlist' if candidate in result.shortlist else 'Reserve' }}</span></td>
-          <td><details><summary>Show 3 reasons <span>+</span></summary><ul>{% for reason in candidate.reasoning %}<li>{{ reason }}</li>{% endfor %}</ul></details></td>
-        </tr>
-      {% endfor %}
-      </tbody></table></div>
-      {% if result.failed_parses %}<p class="warning"><span>!</span>{{ result.parse_failures }} resume(s) need manual review because their content could not be parsed reliably.</p>{% endif %}
-    </section>
-    <script id="candidate-data" type="application/json">{{ candidates|tojson }}</script>
+    {% if results %}
+    <section class="result-head enter"><div><p class="eyebrow"><span></span> ROLE-BY-ROLE REVIEW</p><h2>Separate shortlists, ready to action.</h2><p>{{ results|length }} role{{ '' if results|length == 1 else 's' }} evaluated from the same resume pool.</p></div><div class="metrics"><span><b>{{ results|sum(attribute='candidates_shortlisted') }}</b>total slots</span><span><b>{{ results|sum(attribute='parse_failures') }}</b>parse flags</span></div></section>
+    <div class="role-tabs enter delay-1" role="tablist" aria-label="Role shortlists">{% for role_result in results %}<button class="role-tab {{ 'is-active' if loop.first else '' }}" type="button" role="tab" aria-selected="{{ 'true' if loop.first else 'false' }}" data-role-tab="{{ loop.index0 }}"><span>{{ role_result.jd_role }}</span><b>{{ role_result.candidates_shortlisted }}/{{ role_result.candidates_evaluated }}</b></button>{% endfor %}</div>
+    {% for role_result in results %}
+      {% set candidates = role_result.shortlist + role_result.reserve %}
+      <section class="results-panel role-result enter delay-1 {{ 'is-active' if loop.first else '' }}" data-role-panel="{{ loop.index0 }}">
+        <div class="role-summary"><div><p class="eyebrow"><span></span>{{ role_result.jd_role }}</p><strong>{{ role_result.candidates_shortlisted }} shortlisted</strong><span>Cutoff: {{ role_result.score_cutoff_used if role_result.score_cutoff_used is not none else '—' }}</span></div><span class="role-quota">{{ role_result.candidates_shortlisted }} of {{ role_result.candidates_evaluated }} candidates</span></div>
+        <div class="toolbar"><div class="search-wrap"><span>&#8981;</span><input data-candidate-search type="search" placeholder="Search this role's candidates"></div><button class="secondary" data-export-csv type="button"><span>&#8595;</span> Export {{ role_result.jd_role }} CSV</button></div>
+        <div class="table-wrap"><table data-result-table><thead><tr><th data-key="name">Candidate <span>&#8597;</span></th><th data-key="score">Score <span>&#8597;</span></th><th data-key="confidence">Confidence <span>&#8597;</span></th><th data-key="parse_quality">Parse quality <span>&#8597;</span></th><th>Decision</th><th>Why this score</th></tr></thead><tbody>{% for candidate in candidates %}<tr data-decision="{{ 'Shortlist' if candidate in role_result.shortlist else 'Reserve' }}"><td class="candidate-cell"><span class="candidate-avatar">{{ candidate.name[:1]|upper }}</span><span>{{ candidate.name }}</span></td><td data-sort="{{ candidate.score }}"><strong>{{ candidate.score }}</strong><span class="out-of">/100</span></td><td><span class="badge {{ candidate.confidence|lower }}">{{ candidate.confidence }}</span></td><td><span class="badge {{ candidate.parse_quality|lower }}">{{ candidate.parse_quality }}</span></td><td><span class="decision {{ 'shortlist' if candidate in role_result.shortlist else 'reserve' }}">{{ 'Shortlist' if candidate in role_result.shortlist else 'Reserve' }}</span></td><td><details><summary>Show 3 reasons <span>+</span></summary><ul>{% for reason in candidate.reasoning %}<li>{{ reason }}</li>{% endfor %}</ul></details></td></tr>{% endfor %}</tbody></table></div>
+        {% if role_result.failed_parses %}<p class="warning"><span>!</span>{{ role_result.parse_failures }} resume(s) need manual review because their content could not be parsed reliably.</p>{% endif %}
+        <script class="candidate-data" type="application/json">{{ candidates|tojson }}</script>
+      </section>
+    {% endfor %}
     {% endif %}
     <footer><span>InternLoom Resume Shortlisting Engine</span><span>Fast, explainable, deterministic.</span></footer>
   </main>
