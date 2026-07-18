@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import xml.etree.ElementTree as ElementTree
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -420,4 +421,8 @@ def parse_resumes(resume_folder: str | Path) -> list[dict[str, Any]]:
     folder = Path(resume_folder)
     if not folder.exists() or not folder.is_dir():
         raise ValueError(f"Resume folder does not exist or is not a directory: {folder}")
-    return [parse_resume(path) for path in sorted(folder.rglob("*")) if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS]
+    paths = [path for path in sorted(folder.rglob("*")) if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS]
+    if not paths:
+        return []
+    with ThreadPoolExecutor(max_workers=min(8, len(paths))) as executor:
+        return list(executor.map(parse_resume, paths))

@@ -29,6 +29,8 @@ Open `http://127.0.0.1:5000`, choose one or more PDFs (or a folder in Chrome/Edg
 
 The web UI also accepts a public Google Drive file or folder link. InternLoom downloads supported PDF, DOCX, DOC, TXT, and XML resumes into a temporary workspace, scores them, then removes the temporary files after the review.
 
+Each web review accepts up to 200 resumes with a total upload size of 500 MB. Parsing runs in parallel to keep large batches responsive.
+
 For separate role quotas, use the **Multi-role hiring plan** field with one role per line: `Role | slots | required skills | preferred skills (optional) | CGPA minimum (optional)`. InternLoom produces a separate shortlist table and CSV export for each role.
 
 ## Public Deployment

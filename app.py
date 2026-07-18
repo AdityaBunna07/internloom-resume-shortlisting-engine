@@ -20,7 +20,8 @@ from skills_vocab import SKILL_ALIASES
 
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024
+MAX_RESUME_COUNT = 200
 RUN_DIRECTORY = Path(__file__).parent / "web_runs"
 RUN_DIRECTORY.mkdir(exist_ok=True)
 
@@ -116,6 +117,8 @@ def _save_uploaded_resumes() -> Path:
         drive_link = request.form.get("drive_link", "").strip()
         if drive_link:
             saved_count += _download_drive_resumes(drive_link, destination)
+        if saved_count > MAX_RESUME_COUNT:
+            raise ValueError(f"A review can include up to {MAX_RESUME_COUNT} resumes. Split this batch into smaller groups.")
         if not saved_count:
             raise ValueError("Upload a PDF, DOCX, or DOC resume, choose a folder, or paste a public Google Drive link.")
         return destination
@@ -226,7 +229,7 @@ def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
         safe_name = secure_filename(filename) or f"drive_{file_id}.pdf"
         output = _available_path(destination / safe_name)
         download_jobs.append((file_id, output))
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=12) as executor:
         list(executor.map(lambda job: _download_public_drive_file(*job), download_jobs))
     accepted = len([path for path in destination.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS])
     if not accepted:
@@ -285,7 +288,7 @@ def shortlist():
 
 @app.errorhandler(413)
 def upload_too_large(_error):
-    return render_template("index.html", error="Uploads exceed the 100 MB limit. Use a smaller folder or fewer PDFs."), 413
+    return render_template("index.html", error="Uploads exceed the 500 MB limit. Use a smaller folder or fewer resumes."), 413
 
 
 if __name__ == "__main__":
