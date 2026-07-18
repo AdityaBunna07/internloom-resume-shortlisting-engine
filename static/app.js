@@ -1,3 +1,46 @@
+const root = document.documentElement;
+const themeButton = document.getElementById("theme-toggle");
+const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+function setTheme(theme) {
+  root.dataset.theme = theme;
+  const isDark = theme === "dark";
+  document.querySelector('meta[name="theme-color"]').content = isDark ? "#10131d" : "#f5f7ff";
+  if (themeButton) {
+    themeButton.querySelector(".theme-icon").textContent = isDark ? "☀" : "☾";
+    themeButton.querySelector(".theme-label").textContent = isDark ? "Light mode" : "Dark mode";
+    themeButton.setAttribute("aria-label", `Switch to ${isDark ? "light" : "dark"} mode`);
+  }
+}
+
+setTheme(localStorage.getItem("internloom-theme") || (preferredTheme.matches ? "dark" : "light"));
+
+if (themeButton) {
+  themeButton.addEventListener("click", () => {
+    const theme = root.dataset.theme === "dark" ? "light" : "dark";
+    localStorage.setItem("internloom-theme", theme);
+    setTheme(theme);
+  });
+}
+
+document.querySelectorAll("[data-upload-input]").forEach((input) => {
+  input.addEventListener("change", () => {
+    const status = document.querySelector(`[data-upload-status="${input.id}"]`);
+    if (!status) return;
+    status.textContent = input.files.length ? `${input.files.length} document${input.files.length === 1 ? "" : "s"} selected` : "PDF, DOCX, or DOC";
+    input.closest(".upload-card").classList.toggle("has-files", Boolean(input.files.length));
+  });
+});
+
+const form = document.getElementById("shortlist-form");
+if (form) {
+  form.addEventListener("submit", () => {
+    const button = form.querySelector(".primary-action");
+    button.classList.add("is-loading");
+    button.querySelector(".button-text").textContent = "Reviewing resumes";
+  });
+}
+
 const table = document.getElementById("shortlist-table");
 const search = document.getElementById("candidate-search");
 
@@ -32,10 +75,7 @@ if (exportButton) {
   exportButton.addEventListener("click", () => {
     const candidates = JSON.parse(document.getElementById("candidate-data").textContent);
     const rows = [["Candidate", "File", "Score", "Confidence", "Parse Quality", "Reasoning"]];
-    candidates.forEach((candidate) => rows.push([
-      candidate.name, candidate.file, candidate.score, candidate.confidence,
-      candidate.parse_quality, candidate.reasoning.join(" | "),
-    ]));
+    candidates.forEach((candidate) => rows.push([candidate.name, candidate.file, candidate.score, candidate.confidence, candidate.parse_quality, candidate.reasoning.join(" | ")]));
     const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));

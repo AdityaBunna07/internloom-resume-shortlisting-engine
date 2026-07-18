@@ -27,6 +27,11 @@ def _section_after(text: str, labels: tuple[str, ...], stop_labels: tuple[str, .
     if start is None:
         return ""
     collected = []
+    header = lines[start]
+    matched_label = next(label for label in labels if label in header.lower())
+    inline_content = re.sub(r"^.*?" + re.escape(matched_label) + r"\s*[:=-]?\s*", "", header, flags=re.I).strip()
+    if inline_content and inline_content.lower() != matched_label:
+        collected.append(inline_content)
     for line in lines[start + 1 :]:
         if any(label in line.lower() for label in stop_labels):
             break
