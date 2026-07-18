@@ -31,6 +31,8 @@ The web UI also accepts a public Google Drive file or folder link. InternLoom do
 
 Each web review accepts up to 200 resumes with a total upload size of 500 MB. Parsing runs in parallel to keep large batches responsive.
 
+For public Google Drive folders with more than 50 items, configure a Google Drive API key on the server before starting InternLoom: `set GOOGLE_DRIVE_API_KEY=your_key`. This enables paginated folder listing up to the 200-resume review limit; without the key, Google only exposes the first page of 50 files to anonymous imports.
+
 For separate role quotas, use the **Multi-role hiring plan** field with one role per line: `Role | slots | required skills | preferred skills (optional) | CGPA minimum (optional)`. InternLoom produces a separate shortlist table and CSV export for each role.
 
 ## Public Deployment

@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from html import unescape
+import os
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -214,6 +215,61 @@ def _drive_file_id(parsed_url) -> str | None:
 def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
     import requests
 
+    folder_id = _drive_folder_id(drive_link)
+    api_key = os.getenv("GOOGLE_DRIVE_API_KEY")
+    if api_key:
+        files = _list_drive_files_with_api(folder_id, api_key)
+    else:
+        files = _list_drive_files_from_public_page(drive_link, requests)
+    if len(files) > MAX_RESUME_COUNT:
+        raise ValueError(f"This Drive folder has more than {MAX_RESUME_COUNT} supported resumes. Split it into smaller folders.")
+    download_jobs = []
+    for filename, file_id in files:
+        safe_name = secure_filename(filename) or f"drive_{file_id}.pdf"
+        download_jobs.append((file_id, _available_path(destination / safe_name)))
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        list(executor.map(lambda job: _download_public_drive_file(*job), download_jobs))
+    accepted = len([path for path in destination.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS])
+    if not accepted:
+        raise ValueError("No supported PDF, DOCX, DOC, TXT, or XML resumes were found in that public Google Drive folder.")
+    return accepted
+
+
+def _drive_folder_id(drive_link: str) -> str:
+    match = re.search(r"/folders/([A-Za-z0-9_-]+)", drive_link)
+    if not match:
+        raise ValueError("The Google Drive folder link is invalid.")
+    return match.group(1)
+
+
+def _list_drive_files_with_api(folder_id: str, api_key: str) -> list[tuple[str, str]]:
+    import requests
+
+    files = []
+    page_token = None
+    while True:
+        parameters = {
+            "key": api_key,
+            "q": f"'{folder_id}' in parents and trashed = false",
+            "pageSize": 1000,
+            "fields": "nextPageToken,files(id,name,mimeType)",
+        }
+        if page_token:
+            parameters["pageToken"] = page_token
+        response = requests.get("https://www.googleapis.com/drive/v3/files", params=parameters, timeout=30)
+        if response.status_code in {401, 403}:
+            raise ValueError("Google Drive API access was denied. Check GOOGLE_DRIVE_API_KEY and folder sharing permissions.")
+        response.raise_for_status()
+        payload = response.json()
+        for item in payload.get("files", []):
+            if Path(item.get("name", "")).suffix.lower() in SUPPORTED_RESUME_EXTENSIONS:
+                files.append((item["name"], item["id"]))
+        page_token = payload.get("nextPageToken")
+        if not page_token:
+            return files
+
+
+def _list_drive_files_from_public_page(drive_link: str, requests) -> list[tuple[str, str]]:
     response = requests.get(drive_link, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
     response.raise_for_status()
     pattern = r'aria-label="([^\"]+\.(?:pdf|docx?|txt|xml))\s+[^\"]*?\s+Shared"[^>]*ssk=\'[^\']+:[^\']+:([A-Za-z0-9_-]+)-0-16\''
@@ -224,17 +280,7 @@ def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
         if file_id not in seen_ids:
             files.append((filename, file_id))
             seen_ids.add(file_id)
-    download_jobs = []
-    for filename, file_id in files:
-        safe_name = secure_filename(filename) or f"drive_{file_id}.pdf"
-        output = _available_path(destination / safe_name)
-        download_jobs.append((file_id, output))
-    with ThreadPoolExecutor(max_workers=12) as executor:
-        list(executor.map(lambda job: _download_public_drive_file(*job), download_jobs))
-    accepted = len([path for path in destination.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS])
-    if not accepted:
-        raise ValueError("No supported PDF, DOCX, DOC, TXT, or XML resumes were found in that public Google Drive folder.")
-    return accepted
+    return files
 
 
 def _download_public_drive_file(file_id: str, output: Path) -> bool:
