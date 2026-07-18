@@ -84,14 +84,20 @@ def jds_from_hiring_plan(text: str) -> list[dict]:
     plans = []
     for line_number, raw_line in enumerate(text.splitlines(), start=1):
         line = raw_line.strip()
-        if not line or line.startswith("#"):
+        if not line or line.startswith("#") or ("role" in line.lower() and "required" in line.lower() and "slot" in line.lower()):
             continue
-        parts = [part.strip() for part in line.split("|")]
-        if len(parts) < 3:
-            raise ValueError(f"Hiring plan line {line_number} must use: Role | slots | required skills.")
-        role, slot_text, required_text = parts[:3]
-        preferred_text = parts[3] if len(parts) > 3 else ""
-        cgpa_text = parts[4] if len(parts) > 4 else "0"
+        if "|" in line:
+            parts = [part.strip() for part in line.split("|")]
+            if len(parts) < 3:
+                raise ValueError(f"Hiring plan line {line_number} must use: Role | slots | required skills.")
+            role, slot_text, required_text = parts[:3]
+            preferred_text = parts[3] if len(parts) > 3 else ""
+            cgpa_text = parts[4] if len(parts) > 4 else "0"
+        else:
+            parts = [part.strip() for part in re.split(r"\s+-\s+", line)]
+            if len(parts) < 5:
+                raise ValueError(f"Hiring plan line {line_number} must use: Role - Required Skills - Preferred Skills - CGPA - Min Slots.")
+            role, required_text, preferred_text, cgpa_text, slot_text = parts[:5]
         if not role:
             raise ValueError(f"Hiring plan line {line_number} needs a role name.")
         try:

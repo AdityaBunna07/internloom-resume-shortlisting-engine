@@ -109,8 +109,8 @@ single_jd = st.text_area(
 )
 hiring_plan = st.text_area(
     "Multi-role hiring plan (optional)",
-    placeholder="Web Developer | 10 | HTML, CSS, JavaScript, React, Git\nFrontend Developer | 5 | React, JavaScript, REST API, Git | TypeScript, Jest | 6.5",
-    help="Format: Role | slots | required skills | preferred skills (optional) | CGPA minimum (optional)",
+    placeholder="Role - Required Skills - Preferred Skills - CGPA - Min Slots\nWeb Developer - HTML, CSS, JavaScript, React, Git - TypeScript - 6.5 - 10\nFrontend Developer - React, JavaScript, REST API, Git - TypeScript, Jest - 6.5 - 5",
+    help="Format: Role - Required Skills - Preferred Skills - CGPA - Min Slots",
     height=150,
 )
 
