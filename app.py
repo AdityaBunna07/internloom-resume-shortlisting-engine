@@ -6,6 +6,7 @@ import re
 import shutil
 import tempfile
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from html import unescape
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -220,10 +221,13 @@ def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
         if file_id not in seen_ids:
             files.append((filename, file_id))
             seen_ids.add(file_id)
+    download_jobs = []
     for filename, file_id in files:
         safe_name = secure_filename(filename) or f"drive_{file_id}.pdf"
         output = _available_path(destination / safe_name)
-        _download_public_drive_file(file_id, output)
+        download_jobs.append((file_id, output))
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        list(executor.map(lambda job: _download_public_drive_file(*job), download_jobs))
     accepted = len([path for path in destination.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS])
     if not accepted:
         raise ValueError("No supported PDF, DOCX, DOC, TXT, or XML resumes were found in that public Google Drive folder.")

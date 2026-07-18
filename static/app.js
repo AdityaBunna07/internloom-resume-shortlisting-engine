@@ -38,6 +38,7 @@ if (form) {
     const button = form.querySelector(".primary-action");
     button.classList.add("is-loading");
     button.querySelector(".button-text").textContent = "Reviewing resumes";
+    form.querySelector(".form-progress").classList.add("is-visible");
   });
 }
 

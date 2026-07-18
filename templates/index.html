@@ -33,6 +33,7 @@
         <div class="jd-group"><div class="field-head"><label for="job_description">Single job description</label><span>Use this for one role, or use the hiring plan below for separate role quotas.</span></div><textarea id="job_description" name="job_description" placeholder="Frontend Developer&#10;Required: React, JavaScript, REST API, Git&#10;Preferred: TypeScript, Jest&#10;CGPA minimum: 6.5&#10;Slots: 5">{{ jd_text or '' }}</textarea></div>
         <div class="hiring-plan"><div class="field-head"><label for="hiring_plan">Multi-role hiring plan</label><span>Optional. When filled, it creates separate shortlists for every role.</span></div><textarea id="hiring_plan" name="hiring_plan" placeholder="Web Developer | 10 | HTML, CSS, JavaScript, React, Git&#10;Frontend Developer | 5 | React, JavaScript, REST API, Git | TypeScript, Jest | 6.5&#10;Backend Developer | 8 | Python, SQL, REST API, Git | Docker | 6.5">{{ hiring_plan or '' }}</textarea><p>Format: <code>Role | slots | required skills | preferred skills (optional) | CGPA minimum (optional)</code></p></div>
         <button class="primary-action" type="submit"><span class="button-text">Generate shortlists</span><span class="button-arrow">&#8594;</span><span class="button-loader" aria-hidden="true"></span></button>
+        <p class="form-progress" aria-live="polite">Downloading and parsing resumes. Large Google Drive folders can take up to a minute.</p>
       </form>
       {% if error %}<p class="error" role="alert"><span>!</span>{{ error }}</p>{% endif %}
     </section>
