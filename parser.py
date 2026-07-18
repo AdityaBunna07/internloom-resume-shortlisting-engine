@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,7 @@ SECTION_HEADERS = {
     "certifications": ("certifications", "certificates", "courses", "achievements"),
 }
 
-SUPPORTED_RESUME_EXTENSIONS = {".pdf", ".doc", ".docx"}
+SUPPORTED_RESUME_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt", ".xml"}
 
 
 def _empty_resume(path: Path) -> dict[str, Any]:
@@ -189,6 +190,29 @@ def _extract_legacy_doc_text(path: Path) -> tuple[str, str | None]:
     return "", "Legacy .doc extraction needs Microsoft Word, LibreOffice, antiword, or catdoc on this server."
 
 
+def _extract_plain_text(path: Path) -> tuple[str, str | None]:
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if len(text.strip()) >= 20:
+            return text, None
+        return "", "The text file contains too little readable content."
+    except Exception as error:
+        return "", f"Could not read text file: {type(error).__name__}."
+
+
+def _extract_xml_text(path: Path) -> tuple[str, str | None]:
+    try:
+        root = ElementTree.parse(path).getroot()
+        text = "\n".join(value.strip() for value in root.itertext() if value.strip())
+        if len(text.strip()) >= 20:
+            return text, None
+        return "", "The XML file contains too little readable content."
+    except ElementTree.ParseError:
+        return _extract_plain_text(path)
+    except Exception as error:
+        return "", f"Could not read XML file: {type(error).__name__}."
+
+
 def _extract_text(path: Path) -> tuple[str, str | None]:
     suffix = path.suffix.lower()
     if suffix == ".pdf":
@@ -197,6 +221,10 @@ def _extract_text(path: Path) -> tuple[str, str | None]:
         return _extract_docx_text(path)
     if suffix == ".doc":
         return _extract_legacy_doc_text(path)
+    if suffix == ".txt":
+        return _extract_plain_text(path)
+    if suffix == ".xml":
+        return _extract_xml_text(path)
     return "", f"Unsupported resume format: {suffix or 'no extension'}."
 
 

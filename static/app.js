@@ -27,7 +27,7 @@ document.querySelectorAll("[data-upload-input]").forEach((input) => {
   input.addEventListener("change", () => {
     const status = document.querySelector(`[data-upload-status="${input.id}"]`);
     if (!status) return;
-    status.textContent = input.files.length ? `${input.files.length} document${input.files.length === 1 ? "" : "s"} selected` : "PDF, DOCX, or DOC";
+    status.textContent = input.files.length ? `${input.files.length} document${input.files.length === 1 ? "" : "s"} selected` : "PDF, DOCX, DOC, TXT, or XML";
     input.closest(".upload-card").classList.toggle("has-files", Boolean(input.files.length));
   });
 });

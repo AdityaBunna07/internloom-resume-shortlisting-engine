@@ -126,6 +126,11 @@ def _detect_document_extension(path: Path) -> str | None:
         with zipfile.ZipFile(path) as archive:
             if "word/document.xml" in archive.namelist():
                 return ".docx"
+    stripped_signature = signature.lstrip()
+    if stripped_signature.startswith(b"<?xml") or stripped_signature.startswith(b"<"):
+        return ".xml"
+    if signature and b"\x00" not in signature:
+        return ".txt"
     return None
 
 
@@ -145,7 +150,7 @@ def _download_drive_resumes(drive_link: str, destination: Path) -> int:
     extension = _detect_document_extension(temporary_output)
     if not extension:
         temporary_output.unlink(missing_ok=True)
-        raise ValueError("The Google Drive file is not a supported PDF, DOCX, or DOC resume.")
+        raise ValueError("The Google Drive file is not a supported PDF, DOCX, DOC, TXT, or XML resume.")
     downloaded_paths = [_available_path(temporary_output.with_suffix(extension))]
     temporary_output.rename(downloaded_paths[0])
     accepted = 0
@@ -161,7 +166,7 @@ def _download_drive_resumes(drive_link: str, destination: Path) -> int:
             Path(downloaded_path).rename(path)
         accepted += 1
     if not accepted:
-        raise ValueError("No supported PDF, DOCX, or DOC resumes were found in that public Google Drive link.")
+        raise ValueError("No supported PDF, DOCX, DOC, TXT, or XML resumes were found in that public Google Drive link.")
     return accepted
 
 
@@ -177,7 +182,7 @@ def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
 
     response = requests.get(drive_link, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
     response.raise_for_status()
-    pattern = r'aria-label="([^\"]+\.(?:pdf|docx?))\s+[^\"]*?\s+Shared"[^>]*ssk=\'[^\']+:[^\']+:([A-Za-z0-9_-]+)-0-16\''
+    pattern = r'aria-label="([^\"]+\.(?:pdf|docx?|txt|xml))\s+[^\"]*?\s+Shared"[^>]*ssk=\'[^\']+:[^\']+:([A-Za-z0-9_-]+)-0-16\''
     files = []
     seen_ids = set()
     for match in re.finditer(pattern, response.text, re.IGNORECASE):
@@ -191,7 +196,7 @@ def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
         _download_public_drive_file(file_id, output)
     accepted = len([path for path in destination.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS])
     if not accepted:
-        raise ValueError("No supported PDF, DOCX, or DOC resumes were found in that public Google Drive folder.")
+        raise ValueError("No supported PDF, DOCX, DOC, TXT, or XML resumes were found in that public Google Drive folder.")
     return accepted
 
 
