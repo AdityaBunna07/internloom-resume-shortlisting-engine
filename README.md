@@ -39,6 +39,10 @@ For separate role quotas, use the **Multi-role hiring plan** field with one role
 
 GitHub Pages cannot run Flask or process PDF uploads. This repository includes `render.yaml` for a hosted Python deployment: create a new **Web Service** in Render, connect the GitHub repository, and Render detects the build and start commands. Uploaded resumes are removed from the server immediately after a shortlist is generated.
 
+### Streamlit Community Cloud
+
+For Streamlit Community Cloud, create an app from this GitHub repository and select `streamlit_app.py` as the entrypoint. The included `.streamlit/config.toml` allows 500 MB uploads, while `packages.txt` installs Tesseract and antiword for scanned PDFs and legacy DOC files. Set `GOOGLE_DRIVE_API_KEY` in Streamlit secrets if a public Drive folder has more than 50 files.
+
 The input folder can contain messy or corrupt PDFs, DOCX files, legacy DOC files, TXT files, and XML resume exports. Each supported document remains represented in output: as a scored candidate, reserve candidate, or failed parse requiring manual review. DOCX, TXT, and XML are parsed directly; legacy DOC extraction uses Microsoft Word, LibreOffice, antiword, or catdoc when available.
 
 ## Output
