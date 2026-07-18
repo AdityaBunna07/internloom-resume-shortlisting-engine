@@ -10,7 +10,7 @@ from pathlib import Path
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 
-from parser import parse_resumes
+from parser import SUPPORTED_RESUME_EXTENSIONS, parse_resumes
 from scorer import score_for_jd
 from skills_vocab import SKILL_ALIASES
 
@@ -75,7 +75,7 @@ def _save_uploaded_resumes() -> Path:
     saved_count = 0
     for upload in uploads:
         filename = secure_filename(upload.filename or "")
-        if not filename or Path(filename).suffix.lower() != ".pdf":
+        if not filename or Path(filename).suffix.lower() not in SUPPORTED_RESUME_EXTENSIONS:
             continue
         target = destination / filename
         duplicate_number = 2
@@ -85,7 +85,7 @@ def _save_uploaded_resumes() -> Path:
         upload.save(target)
         saved_count += 1
     if not saved_count:
-        raise ValueError("Upload at least one PDF resume or select a folder containing PDFs.")
+        raise ValueError("Upload at least one PDF, DOCX, or DOC resume, or select a folder containing them.")
     return destination
 
 

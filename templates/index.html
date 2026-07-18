@@ -16,11 +16,11 @@
 
     <section class="panel form-panel">
       <form action="{{ url_for('shortlist') }}" method="post" enctype="multipart/form-data">
-        <label for="resumes">Resume PDFs</label>
-        <input id="resumes" name="resumes" type="file" accept="application/pdf,.pdf" multiple>
-        <p class="hint">Choose one PDF or multiple PDFs. Uploads are used only for this shortlist and deleted after processing.</p>
+        <label for="resumes">Resume documents</label>
+        <input id="resumes" name="resumes" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple>
+        <p class="hint">Choose one or multiple PDF, DOCX, or DOC resumes. Uploads are used only for this shortlist and deleted after processing.</p>
         <label for="resume-folder">Or choose a resume folder</label>
-        <input id="resume-folder" name="resumes" type="file" accept="application/pdf,.pdf" multiple webkitdirectory directory>
+        <input id="resume-folder" name="resumes" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple webkitdirectory directory>
         <p class="hint">Folder selection is supported by Chromium-based browsers. Use either upload control.</p>
         <label for="job_description">Job description</label>
         <textarea id="job_description" name="job_description" required placeholder="Frontend Developer&#10;Required: React, JavaScript, REST API, Git&#10;Preferred: TypeScript, Jest&#10;CGPA minimum: 6.5&#10;Slots: 5">{{ jd_text or '' }}</textarea>

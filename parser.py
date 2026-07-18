@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import io
 import re
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +18,8 @@ SECTION_HEADERS = {
     "experience": ("experience", "work experience", "employment", "internship", "internships"),
     "certifications": ("certifications", "certificates", "courses", "achievements"),
 }
+
+SUPPORTED_RESUME_EXTENSIONS = {".pdf", ".doc", ".docx"}
 
 
 def _empty_resume(path: Path) -> dict[str, Any]:
@@ -114,7 +119,7 @@ def _ocr_text(path: Path) -> str:
         return ""
 
 
-def _extract_text(path: Path) -> tuple[str, str | None]:
+def _extract_pdf_text(path: Path) -> tuple[str, str | None]:
     plumber_text = _extract_pdfplumber_text(path)
     fitz_text, used_columns = _extract_fitz_text(path)
     text = fitz_text if used_columns and len(fitz_text.strip()) >= 50 else plumber_text or fitz_text
@@ -124,6 +129,75 @@ def _extract_text(path: Path) -> tuple[str, str | None]:
     if len(ocr_text.strip()) >= 20:
         return ocr_text, "OCR fallback used because the PDF had little embedded text."
     return "", "No usable embedded text or OCR output; PDF may be corrupt, protected, or image-only."
+
+
+def _extract_docx_text(path: Path) -> tuple[str, str | None]:
+    try:
+        from docx import Document
+
+        document = Document(path)
+        parts = [paragraph.text for paragraph in document.paragraphs]
+        for table in document.tables:
+            for row in table.rows:
+                parts.append(" | ".join(cell.text for cell in row.cells))
+        text = "\n".join(part for part in parts if part.strip())
+        if len(text.strip()) >= 20:
+            return text, None
+        return "", "The DOCX file contains too little readable text."
+    except Exception as error:
+        return "", f"Could not read DOCX file: {type(error).__name__}."
+
+
+def _extract_legacy_doc_text(path: Path) -> tuple[str, str | None]:
+    for command in (("antiword", str(path)), ("catdoc", str(path))):
+        executable = shutil.which(command[0])
+        if not executable:
+            continue
+        try:
+            process = subprocess.run((executable, command[1]), capture_output=True, text=True, timeout=30, check=False)
+            if process.returncode == 0 and len(process.stdout.strip()) >= 20:
+                return process.stdout, None
+        except Exception:
+            continue
+    soffice = shutil.which("soffice") or shutil.which("libreoffice")
+    if soffice:
+        try:
+            with tempfile.TemporaryDirectory() as temporary_directory:
+                process = subprocess.run((soffice, "--headless", "--convert-to", "txt:Text", "--outdir", temporary_directory, str(path)), capture_output=True, text=True, timeout=45, check=False)
+                converted = Path(temporary_directory) / f"{path.stem}.txt"
+                if process.returncode == 0 and converted.exists():
+                    text = converted.read_text(encoding="utf-8", errors="ignore")
+                    if len(text.strip()) >= 20:
+                        return text, None
+        except Exception:
+            pass
+    try:
+        import pythoncom
+        import win32com.client
+
+        pythoncom.CoInitialize()
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
+        document = word.Documents.Open(str(path.resolve()), ReadOnly=True)
+        text = document.Content.Text
+        document.Close(False)
+        word.Quit()
+        if len(text.strip()) >= 20:
+            return text, None
+    except Exception:
+        pass
+    return "", "Legacy .doc extraction needs Microsoft Word, LibreOffice, antiword, or catdoc on this server."
+
+
+def _extract_text(path: Path) -> tuple[str, str | None]:
+    suffix = path.suffix.lower()
+    if suffix == ".pdf":
+        return _extract_pdf_text(path)
+    if suffix == ".docx":
+        return _extract_docx_text(path)
+    if suffix == ".doc":
+        return _extract_legacy_doc_text(path)
+    return "", f"Unsupported resume format: {suffix or 'no extension'}."
 
 
 def _find_name(text: str) -> str | None:
@@ -267,8 +341,8 @@ def _extract_certifications(text: str) -> list[str]:
     return [re.sub(r"^[•*-]\s*", "", line) for line in _section_lines(text, "certifications")[:10]]
 
 
-def parse_resume(pdf_path: str | Path) -> dict[str, Any]:
-    path = Path(pdf_path)
+def parse_resume(resume_path: str | Path) -> dict[str, Any]:
+    path = Path(resume_path)
     resume = _empty_resume(path)
     try:
         text, extraction_note = _extract_text(path)
@@ -318,4 +392,4 @@ def parse_resumes(resume_folder: str | Path) -> list[dict[str, Any]]:
     folder = Path(resume_folder)
     if not folder.exists() or not folder.is_dir():
         raise ValueError(f"Resume folder does not exist or is not a directory: {folder}")
-    return [parse_resume(path) for path in sorted(folder.iterdir()) if path.is_file() and path.suffix.lower() == ".pdf"]
+    return [parse_resume(path) for path in sorted(folder.iterdir()) if path.is_file() and path.suffix.lower() in SUPPORTED_RESUME_EXTENSIONS]

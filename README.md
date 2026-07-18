@@ -1,6 +1,6 @@
 # InternLoom Resume Shortlisting Engine
 
-A fast, deterministic Python CLI that parses raw PDF resumes and produces ranked, explainable shortlists for multiple job descriptions. It has no web UI and makes no LLM/API calls while scoring.
+A fast, deterministic Python CLI that parses raw PDF, DOCX, and DOC resumes and produces ranked, explainable shortlists for multiple job descriptions. It has no LLM/API calls while scoring.
 
 ## Setup
 
@@ -31,7 +31,7 @@ Open `http://127.0.0.1:5000`, choose one or more PDFs (or a folder in Chrome/Edg
 
 GitHub Pages cannot run Flask or process PDF uploads. This repository includes `render.yaml` for a hosted Python deployment: create a new **Web Service** in Render, connect the GitHub repository, and Render detects the build and start commands. Uploaded resumes are removed from the server immediately after a shortlist is generated.
 
-The input folder can contain messy or corrupt PDFs. Each PDF remains represented in output: as a scored candidate, reserve candidate, or failed parse requiring manual review.
+The input folder can contain messy or corrupt PDFs, DOCX files, and legacy DOC files. Each supported document remains represented in output: as a scored candidate, reserve candidate, or failed parse requiring manual review. DOCX is parsed directly; legacy DOC extraction uses Microsoft Word, LibreOffice, antiword, or catdoc when available.
 
 ## Output
 
