@@ -216,7 +216,7 @@ def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
     import requests
 
     folder_id = _drive_folder_id(drive_link)
-    api_key = os.getenv("GOOGLE_DRIVE_API_KEY")
+    api_key = _google_drive_api_key()
     if api_key:
         files = _list_drive_files_with_api(folder_id, api_key)
     else:
@@ -233,6 +233,17 @@ def _download_public_drive_folder(drive_link: str, destination: Path) -> int:
     if not accepted:
         raise ValueError("No supported PDF, DOCX, DOC, TXT, or XML resumes were found in that public Google Drive folder.")
     return accepted
+
+
+def _google_drive_api_key() -> str | None:
+    if api_key := os.getenv("GOOGLE_DRIVE_API_KEY"):
+        return api_key
+    try:
+        import streamlit as st
+
+        return st.secrets.get("GOOGLE_DRIVE_API_KEY")
+    except Exception:
+        return None
 
 
 def _drive_folder_id(drive_link: str) -> str:
