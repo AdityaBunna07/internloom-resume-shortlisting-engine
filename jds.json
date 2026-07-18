@@ -1,0 +1,37 @@
+[
+  {
+    "role": "Frontend Developer",
+    "required": ["HTML", "CSS", "JavaScript", "React.js or Next.js", "Git/GitHub", "REST API consumption"],
+    "preferred": ["TypeScript", "Redux/Zustand", "Responsive design", "Jest"],
+    "cgpa_min": 6.5,
+    "slots": 8
+  },
+  {
+    "role": "Backend Developer",
+    "required": ["Node.js/Python/Java", "REST API design", "SQL or NoSQL DB", "Git/GitHub"],
+    "preferred": ["Docker", "Auth JWT/OAuth", "API documentation", "Cloud basics"],
+    "cgpa_min": 6.5,
+    "slots": 10
+  },
+  {
+    "role": "Full Stack Developer",
+    "required": ["React.js + Node.js or equivalent", "Database (any)", "REST APIs build+consume", "Git/GitHub", "deployment basics"],
+    "preferred": ["Firebase/cloud DB", "CI/CD awareness", "GraphQL"],
+    "cgpa_min": 7.0,
+    "slots": 7
+  },
+  {
+    "role": "Database Developer",
+    "required": ["MySQL or PostgreSQL", "schema design/normalization", "query writing/optimization", "basic indexing"],
+    "preferred": ["MongoDB/Redis", "stored procedures", "aggregation pipelines", "ERD design"],
+    "cgpa_min": 6.0,
+    "slots": 3
+  },
+  {
+    "role": "API Integration Developer",
+    "required": ["REST API consumption", "Postman/Swagger", "JSON handling", "any backend language"],
+    "preferred": ["OAuth/API key auth", "webhook handling", "third-party SDK integration", "API documentation writing"],
+    "cgpa_min": 6.0,
+    "slots": 2
+  }
+]
